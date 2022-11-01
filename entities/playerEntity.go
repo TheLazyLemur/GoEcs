@@ -6,8 +6,9 @@ import (
 	"github.com/EngoEngine/ecs"
 )
 
-type EnemyEntity struct {
+type PlayerEntity struct {
 	ecs.BasicEntity
-	*cmp.AiComponent
-	*cmp.HealthComponent
+	*cmp.MovementComponent
+    *cmp.HealthComponent
+	*cmp.SpaceComponent
 }

@@ -1,11 +1,11 @@
 package components
 
 type MovementComponent struct {
-	Speed int
+	Speed float32
 }
 
-func (a *MovementComponent) GetMovementComponent() *MovementComponent {
-	return a
+func (cmp *MovementComponent) GetMovementComponent() *MovementComponent {
+	return cmp
 }
 
 type MovementFace interface {

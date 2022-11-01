@@ -5,8 +5,8 @@ type HealthComponent struct {
 	Current int
 }
 
-func (a *HealthComponent) GetHealthComponent() *HealthComponent {
-	return a
+func (cmp *HealthComponent) GetHealthComponent() *HealthComponent {
+	return cmp
 }
 
 type HealthFace interface {

@@ -1,56 +1,80 @@
 package main
 
 import (
-	"GoEcs/components"
-	"GoEcs/entities"
-	"GoEcs/systems"
+	cmp "GoEcs/components"
+	ent "GoEcs/entities"
+	sys "GoEcs/systems"
 
 	"github.com/EngoEngine/ecs"
+	"github.com/gen2brain/raylib-go/raylib"
 )
 
 func main() {
 	w := ecs.World{}
 
-	var myable *systems.Enemyable
+	var enemyable *sys.Enemyable
+	var playerable *sys.Playerable
 
-	w.AddSystemInterface(&systems.EnemySystem{Entities: make(map[uint64]entities.EnemyEntity)}, myable, nil)
+	w.AddSystemInterface(&sys.PlayerSystem{
+		Entities: make(map[uint64]ent.PlayerEntity),
+	}, playerable, nil)
 
-	entity := entities.EnemyEntity{
+	w.AddSystemInterface(&sys.EnemySystem{
+		Entities: make(map[uint64]ent.EnemyEntity),
+	}, enemyable, nil)
+
+
+	player := ent.PlayerEntity{
 		BasicEntity: ecs.NewBasic(),
-		MovementComponent: &components.MovementComponent{
+		MovementComponent: &cmp.MovementComponent{
 			Speed: 100,
 		},
-		HealthComponent: &components.HealthComponent{
+		HealthComponent: &cmp.HealthComponent{
+			Max:     100,
+			Current: 100,
+		},
+        SpaceComponent: cmp.NewSpaceComponent(),
+	}
+
+	entity := ent.EnemyEntity{
+		BasicEntity: ecs.NewBasic(),
+		AiComponent: &cmp.AiComponent{
+			Speed: 100,
+		},
+		HealthComponent: &cmp.HealthComponent{
 			Max:     100,
 			Current: 100,
 		},
 	}
 
-	entity2 := entities.EnemyEntity{
+	entity2 := ent.EnemyEntity{
 		BasicEntity: ecs.NewBasic(),
-		MovementComponent: &components.MovementComponent{
+		AiComponent: &cmp.AiComponent{
 			Speed: 100,
 		},
-		HealthComponent: &components.HealthComponent{
-			Max:     10,
-			Current: 10,
+		HealthComponent: &cmp.HealthComponent{
+			Max:     200,
+			Current: 200,
 		},
 	}
 
 	w.SortSystems()
 
+	w.AddEntity(&player)
 	w.AddEntity(&entity)
 	w.AddEntity(&entity2)
-	w.Update(0.1)
-	w.Update(0.1)
-	w.Update(0.1)
-	w.Update(0.1)
-	w.Update(0.1)
-	w.Update(0.1)
-	w.Update(0.1)
-	w.Update(0.1)
-	w.Update(0.1)
-	w.Update(0.1)
-	w.Update(0.1)
-	w.Update(0.1)
+
+	rl.InitWindow(800, 450, "Space Impact")
+	rl.SetTargetFPS(60)
+
+	for !rl.WindowShouldClose() {
+		rl.BeginDrawing()
+
+		w.Update(rl.GetFrameTime())
+		rl.ClearBackground(rl.Black)
+
+		rl.EndDrawing()
+	}
+
+	rl.CloseWindow()
 }
