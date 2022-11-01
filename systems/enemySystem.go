@@ -34,12 +34,12 @@ func (m *EnemySystem) Remove(basic ecs.BasicEntity) {
 
 func (m *EnemySystem) Update(dt float32) {
 	for i, e := range m.Entities {
-		e.HealthComponent.Current--
-		if e.HealthComponent.Current <= 0 {
+		e.HealthComponent.ChangeHealth(-1)
+		if e.HealthComponent.IsDead() {
 			m.Remove(e.BasicEntity)
 			continue
 		}
-		rl.DrawText(fmt.Sprintf("%d/%d", e.HealthComponent.Current, e.HealthComponent.Max), 0, int32(0+i*20), 20, rl.LightGray)
+		rl.DrawText(fmt.Sprintf("%d/%d", e.HealthComponent.GetCurrentHealth(), e.HealthComponent.GetMaxHealth()), 0, int32(0+i*20), 20, rl.LightGray)
 	}
 }
 

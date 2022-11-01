@@ -29,10 +29,7 @@ func main() {
 		MovementComponent: &cmp.MovementComponent{
 			Speed: 100,
 		},
-		HealthComponent: &cmp.HealthComponent{
-			Max:     100,
-			Current: 100,
-		},
+		HealthComponent: cmp.NewHealthComponent(100,100),
         SpaceComponent: cmp.NewSpaceComponent(),
 	}
 
@@ -41,10 +38,7 @@ func main() {
 		AiComponent: &cmp.AiComponent{
 			Speed: 100,
 		},
-		HealthComponent: &cmp.HealthComponent{
-			Max:     100,
-			Current: 100,
-		},
+		HealthComponent: cmp.NewHealthComponent(100,100),
 	}
 
 	entity2 := ent.EnemyEntity{
@@ -52,10 +46,7 @@ func main() {
 		AiComponent: &cmp.AiComponent{
 			Speed: 100,
 		},
-		HealthComponent: &cmp.HealthComponent{
-			Max:     200,
-			Current: 200,
-		},
+		HealthComponent: cmp.NewHealthComponent(100,100),
 	}
 
 	w.SortSystems()
