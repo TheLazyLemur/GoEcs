@@ -1,9 +1,9 @@
 package main
 
 import (
-	cmp "GoEcs/components"
-	ent "GoEcs/entities"
-	sys "GoEcs/systems"
+	cmp "github.com/TheLazyLemur/SpaceImpact/components"
+	ent "github.com/TheLazyLemur/SpaceImpact/entities"
+	sys "github.com/TheLazyLemur/SpaceImpact/systems"
 
 	"github.com/EngoEngine/ecs"
 	"github.com/gen2brain/raylib-go/raylib"
@@ -23,14 +23,13 @@ func main() {
 		Entities: make(map[uint64]ent.EnemyEntity),
 	}, enemyable, nil)
 
-
 	player := ent.PlayerEntity{
 		BasicEntity: ecs.NewBasic(),
 		MovementComponent: &cmp.MovementComponent{
 			Speed: 100,
 		},
-		HealthComponent: cmp.NewHealthComponent(100,100),
-        SpaceComponent: cmp.NewSpaceComponent(),
+		HealthComponent: cmp.NewHealthComponent(100, 100),
+		SpaceComponent:  cmp.NewSpaceComponent(),
 	}
 
 	entity := ent.EnemyEntity{
@@ -38,7 +37,7 @@ func main() {
 		AiComponent: &cmp.AiComponent{
 			Speed: 100,
 		},
-		HealthComponent: cmp.NewHealthComponent(100,100),
+		HealthComponent: cmp.NewHealthComponent(100, 100),
 	}
 
 	entity2 := ent.EnemyEntity{
@@ -46,7 +45,7 @@ func main() {
 		AiComponent: &cmp.AiComponent{
 			Speed: 100,
 		},
-		HealthComponent: cmp.NewHealthComponent(100,100),
+		HealthComponent: cmp.NewHealthComponent(100, 100),
 	}
 
 	w.SortSystems()

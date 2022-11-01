@@ -3,8 +3,8 @@ package systems
 import (
 	"fmt"
 
-	cmp "GoEcs/components"
-	ent "GoEcs/entities"
+	cmp "github.com/TheLazyLemur/SpaceImpact/components"
+	ent "github.com/TheLazyLemur/SpaceImpact/entities"
 
 	"github.com/EngoEngine/ecs"
 	"github.com/gen2brain/raylib-go/raylib"

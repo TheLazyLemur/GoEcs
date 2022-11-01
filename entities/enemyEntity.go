@@ -1,7 +1,7 @@
 package entities
 
 import (
-	cmp "GoEcs/components"
+	cmp "github.com/TheLazyLemur/SpaceImpact/components"
 
 	"github.com/EngoEngine/ecs"
 )

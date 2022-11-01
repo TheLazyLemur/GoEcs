@@ -1,4 +1,4 @@
-module GoEcs
+module github.com/TheLazyLemur/SpaceImpact
 
 go 1.19
 
