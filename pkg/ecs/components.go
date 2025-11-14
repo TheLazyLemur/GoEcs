@@ -1,15 +1,16 @@
 package ecs
 
 import (
+	"github.com/yohamta/donburi"
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
-// Component type names as constants
-const (
-	ComponentTypeTransform  = "Transform"
-	ComponentTypeRenderMesh = "RenderMesh"
-	ComponentTypeName       = "Name"
-	ComponentTypeCamera     = "Camera"
+// Component type definitions using Donburi
+var (
+	TransformComponent  = donburi.NewComponentType[Transform]()
+	RenderMeshComponent = donburi.NewComponentType[RenderMesh]()
+	NameComponent       = donburi.NewComponentType[Name]()
+	CameraComponent     = donburi.NewComponentType[Camera]()
 )
 
 // Transform component holds position, rotation, and scale

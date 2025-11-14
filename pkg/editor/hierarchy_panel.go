@@ -1,8 +1,6 @@
 package editor
 
 import (
-	"fmt"
-
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
@@ -61,7 +59,7 @@ func (hp *HierarchyPanel) Draw(state *EditorState) {
 		// Get entity name
 		name, ok := state.Scene.GetName(entityID)
 		if !ok {
-			name = fmt.Sprintf("Entity %d", entityID)
+			name = "Unnamed Entity"
 		}
 
 		itemY := contentBounds.Y + yOffset - hp.ScrollView.Y
@@ -114,16 +112,6 @@ func (hp *HierarchyPanel) Draw(state *EditorState) {
 			int32(itemBounds.Y+5),
 			16,
 			textColor,
-		)
-
-		// Draw entity ID (small, gray)
-		idText := fmt.Sprintf("#%d", entityID)
-		rl.DrawText(
-			idText,
-			int32(itemBounds.X+itemBounds.Width-60),
-			int32(itemBounds.Y+7),
-			12,
-			rl.Gray,
 		)
 
 		yOffset += itemHeight

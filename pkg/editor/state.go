@@ -92,12 +92,12 @@ func (es *EditorState) IsSelected(id ecs.EntityID) bool {
 	return false
 }
 
-// GetFirstSelected returns the first selected entity (or 0 if none)
+// GetFirstSelected returns the first selected entity (or nil if none)
 func (es *EditorState) GetFirstSelected() ecs.EntityID {
 	if len(es.Selected) > 0 {
 		return es.Selected[0]
 	}
-	return 0
+	return nil
 }
 
 // HasSelection returns true if any entities are selected

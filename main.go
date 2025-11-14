@@ -118,7 +118,7 @@ func runEditor() {
 						}
 
 						name, _ := scene.GetName(pickResult.EntityID)
-						fmt.Printf("Selected: %s (ID: %d, Distance: %.2f)\n", name, pickResult.EntityID, pickResult.Distance)
+						fmt.Printf("Selected: %s (Distance: %.2f)\n", name, pickResult.Distance)
 					} else {
 						// Clicked in viewport but hit nothing - clear selection
 						if !rl.IsKeyDown(rl.KeyLeftControl) && !rl.IsKeyDown(rl.KeyRightControl) {

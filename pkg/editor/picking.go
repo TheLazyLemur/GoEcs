@@ -3,6 +3,9 @@ package editor
 import (
 	"github.com/TheLazyLemur/SpaceImpact/pkg/ecs"
 	pkgmath "github.com/TheLazyLemur/SpaceImpact/pkg/math"
+	"github.com/yohamta/donburi"
+	"github.com/yohamta/donburi/filter"
+	"github.com/yohamta/donburi/query"
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
@@ -41,28 +44,21 @@ func PickEntityInViewport(
 	// Find closest hit
 	closestHit := PickResult{Hit: false, Distance: 999999.0}
 
-	// Get all entities with Transform and RenderMesh
+	// Get all entities with Transform and RenderMesh using Donburi query
 	world := scene.GetWorld()
-	entities := world.GetEntitiesWithComponents(ecs.ComponentTypeTransform, ecs.ComponentTypeRenderMesh)
+	q := query.NewQuery(filter.Contains(ecs.TransformComponent, ecs.RenderMeshComponent))
 
-	for _, entityID := range entities {
+	q.Each(world.GetDonburiWorld(), func(entry *donburi.Entry) {
 		// Get render mesh to determine bounding box
-		renderMeshComp, ok := world.GetComponent(entityID, ecs.ComponentTypeRenderMesh)
-		if !ok {
-			continue
-		}
-		renderMesh, ok := renderMeshComp.(*ecs.RenderMesh)
-		if !ok {
-			continue
-		}
+		renderMesh := ecs.RenderMeshComponent.Get(entry)
 
 		// Get local bounding box for mesh type
 		localBounds := pkgmath.GetDefaultMeshBounds(renderMesh.MeshID)
 
 		// Get world transform matrix
-		worldMatrix, ok := transformSystem.GetWorldMatrix(entityID)
+		worldMatrix, ok := transformSystem.GetWorldMatrix(entry)
 		if !ok {
-			continue
+			return
 		}
 
 		// Transform bounding box to world space
@@ -75,12 +71,12 @@ func PickEntityInViewport(
 			if distance > 0 && distance < closestHit.Distance {
 				closestHit = PickResult{
 					Hit:      true,
-					EntityID: entityID,
+					EntityID: entry,
 					Distance: distance,
 				}
 			}
 		}
-	}
+	})
 
 	return closestHit
 }

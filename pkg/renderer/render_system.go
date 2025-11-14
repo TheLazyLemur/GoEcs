@@ -3,6 +3,9 @@ package renderer
 import (
 	"github.com/TheLazyLemur/SpaceImpact/pkg/assets"
 	"github.com/TheLazyLemur/SpaceImpact/pkg/ecs"
+	"github.com/yohamta/donburi"
+	"github.com/yohamta/donburi/filter"
+	"github.com/yohamta/donburi/query"
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
@@ -23,34 +26,22 @@ func NewRenderSystem(assetMgr *assets.AssetManager, transformSys *ecs.TransformS
 // Render draws all entities with Transform and RenderMesh components
 func (rs *RenderSystem) Render(scene *ecs.Scene) {
 	world := scene.GetWorld()
-	entities := world.GetEntitiesWithComponents(ecs.ComponentTypeTransform, ecs.ComponentTypeRenderMesh)
 
-	for _, entityID := range entities {
-		rs.renderEntity(world, entityID)
-	}
+	// Query all entities with both Transform and RenderMesh components
+	q := query.NewQuery(filter.Contains(ecs.TransformComponent, ecs.RenderMeshComponent))
+
+	q.Each(world.GetDonburiWorld(), func(entry *donburi.Entry) {
+		rs.renderEntity(entry)
+	})
 }
 
 // renderEntity renders a single entity
-func (rs *RenderSystem) renderEntity(world *ecs.World, entityID ecs.EntityID) {
+func (rs *RenderSystem) renderEntity(entity ecs.EntityID) {
 	// Get transform
-	transformComp, ok := world.GetComponent(entityID, ecs.ComponentTypeTransform)
-	if !ok {
-		return
-	}
-	transform, ok := transformComp.(*ecs.Transform)
-	if !ok {
-		return
-	}
+	transform := ecs.TransformComponent.Get(entity)
 
 	// Get render mesh
-	meshComp, ok := world.GetComponent(entityID, ecs.ComponentTypeRenderMesh)
-	if !ok {
-		return
-	}
-	renderMesh, ok := meshComp.(*ecs.RenderMesh)
-	if !ok {
-		return
-	}
+	renderMesh := ecs.RenderMeshComponent.Get(entity)
 
 	// Get mesh from registry
 	mesh, ok := rs.assetManager.GetMeshes().Get(renderMesh.MeshID)
@@ -68,7 +59,7 @@ func (rs *RenderSystem) renderEntity(world *ecs.World, entityID ecs.EntityID) {
 	}
 
 	// Get world matrix
-	worldMatrix, ok := rs.transformSystem.GetWorldMatrix(entityID)
+	worldMatrix, ok := rs.transformSystem.GetWorldMatrix(entity)
 	if !ok {
 		worldMatrix = rl.MatrixIdentity()
 	}

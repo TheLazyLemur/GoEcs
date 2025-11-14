@@ -35,7 +35,7 @@ func (ip *InspectorPanel) Draw(state *EditorState) {
 		if ok {
 			title = fmt.Sprintf("Inspector - %s", name)
 		} else {
-			title = fmt.Sprintf("Inspector - Entity #%d", entityID)
+			title = "Inspector - Entity"
 		}
 	}
 
@@ -81,17 +81,17 @@ func (ip *InspectorPanel) Draw(state *EditorState) {
 	yOffset := float32(0)
 
 	// Draw Name component
-	if state.Scene.HasComponent(entityID, ecs.ComponentTypeName) {
+	if state.Scene.HasComponent(entityID, "Name") {
 		yOffset += ip.drawNameComponent(state, entityID, contentBounds, yOffset)
 	}
 
 	// Draw Transform component
-	if state.Scene.HasComponent(entityID, ecs.ComponentTypeTransform) {
+	if state.Scene.HasComponent(entityID, "Transform") {
 		yOffset += ip.drawTransformComponent(state, entityID, contentBounds, yOffset)
 	}
 
 	// Draw RenderMesh component
-	if state.Scene.HasComponent(entityID, ecs.ComponentTypeRenderMesh) {
+	if state.Scene.HasComponent(entityID, "RenderMesh") {
 		yOffset += ip.drawRenderMeshComponent(state, entityID, contentBounds, yOffset)
 	}
 

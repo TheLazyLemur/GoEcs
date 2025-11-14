@@ -1,18 +1,21 @@
 package ecs
 
 import (
+	"github.com/yohamta/donburi"
+	"github.com/yohamta/donburi/filter"
+	"github.com/yohamta/donburi/query"
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
 // TransformCache stores computed world matrices for entities
 type TransformCache struct {
-	matrices map[EntityID]rl.Matrix
+	matrices map[donburi.Entity]rl.Matrix
 }
 
 // NewTransformCache creates a new transform cache
 func NewTransformCache() *TransformCache {
 	return &TransformCache{
-		matrices: make(map[EntityID]rl.Matrix),
+		matrices: make(map[donburi.Entity]rl.Matrix),
 	}
 }
 
@@ -31,28 +34,22 @@ func NewTransformSystem() *TransformSystem {
 // Update processes all entities with Transform components
 func (ts *TransformSystem) Update(scene *Scene) {
 	world := scene.GetWorld()
-	entities := world.GetEntitiesWithComponent(ComponentTypeTransform)
 
-	for _, entityID := range entities {
-		comp, ok := world.GetComponent(entityID, ComponentTypeTransform)
-		if !ok {
-			continue
-		}
+	// Query all entities with Transform component
+	q := query.NewQuery(filter.Contains(TransformComponent))
 
-		transform, ok := comp.(*Transform)
-		if !ok {
-			continue
-		}
+	q.Each(world.GetDonburiWorld(), func(entry *donburi.Entry) {
+		transform := TransformComponent.Get(entry)
 
 		// Build world matrix from position, rotation, and scale
 		matrix := ts.buildWorldMatrix(transform)
-		ts.cache.matrices[entityID] = matrix
-	}
+		ts.cache.matrices[entry.Entity()] = matrix
+	})
 }
 
 // GetWorldMatrix retrieves the cached world matrix for an entity
-func (ts *TransformSystem) GetWorldMatrix(id EntityID) (rl.Matrix, bool) {
-	matrix, ok := ts.cache.matrices[id]
+func (ts *TransformSystem) GetWorldMatrix(entity EntityID) (rl.Matrix, bool) {
+	matrix, ok := ts.cache.matrices[entity.Entity()]
 	return matrix, ok
 }
 

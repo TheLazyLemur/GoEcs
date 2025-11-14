@@ -1,169 +1,69 @@
 package ecs
 
 import (
-	"sort"
-	"sync"
+	"github.com/yohamta/donburi"
+	"github.com/yohamta/donburi/filter"
+	"github.com/yohamta/donburi/query"
 )
 
-// EntityID is a unique identifier for an entity
-type EntityID uint64
+// EntityID is a type alias for Donburi's Entity
+type EntityID = *donburi.Entry
 
-// Component is a marker interface for all components
-type Component interface{}
-
-// World holds all entities and their components
+// World wraps Donburi's World
 type World struct {
-	nextEntityID EntityID
-	entities     map[EntityID]bool
-	components   map[EntityID]map[string]Component
-	mu           sync.RWMutex
+	world donburi.World
 }
 
 // NewWorld creates a new ECS world
 func NewWorld() *World {
 	return &World{
-		nextEntityID: 1,
-		entities:     make(map[EntityID]bool),
-		components:   make(map[EntityID]map[string]Component),
+		world: donburi.NewWorld(),
 	}
+}
+
+// GetDonburiWorld returns the underlying Donburi world
+func (w *World) GetDonburiWorld() donburi.World {
+	return w.world
 }
 
 // CreateEntity creates a new entity and returns its ID
 func (w *World) CreateEntity() EntityID {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-
-	id := w.nextEntityID
-	w.nextEntityID++
-	w.entities[id] = true
-	w.components[id] = make(map[string]Component)
-	return id
+	return w.world.Entry(w.world.Create(NameComponent))
 }
 
 // DestroyEntity removes an entity and all its components
-func (w *World) DestroyEntity(id EntityID) {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-
-	delete(w.entities, id)
-	delete(w.components, id)
-}
-
-// AddComponent adds a component to an entity
-func (w *World) AddComponent(id EntityID, componentType string, component Component) {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-
-	if _, exists := w.entities[id]; !exists {
-		return
-	}
-
-	w.components[id][componentType] = component
-}
-
-// RemoveComponent removes a component from an entity
-func (w *World) RemoveComponent(id EntityID, componentType string) {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-
-	if comps, exists := w.components[id]; exists {
-		delete(comps, componentType)
-	}
-}
-
-// GetComponent retrieves a component from an entity
-func (w *World) GetComponent(id EntityID, componentType string) (Component, bool) {
-	w.mu.RLock()
-	defer w.mu.RUnlock()
-
-	if comps, exists := w.components[id]; exists {
-		comp, ok := comps[componentType]
-		return comp, ok
-	}
-	return nil, false
-}
-
-// HasComponent checks if an entity has a specific component
-func (w *World) HasComponent(id EntityID, componentType string) bool {
-	w.mu.RLock()
-	defer w.mu.RUnlock()
-
-	if comps, exists := w.components[id]; exists {
-		_, ok := comps[componentType]
-		return ok
-	}
-	return false
-}
-
-// GetAllEntities returns all entity IDs sorted by ID
-func (w *World) GetAllEntities() []EntityID {
-	w.mu.RLock()
-	defer w.mu.RUnlock()
-
-	entities := make([]EntityID, 0, len(w.entities))
-	for id := range w.entities {
-		entities = append(entities, id)
-	}
-
-	// Sort entities by ID to maintain stable order
-	sort.Slice(entities, func(i, j int) bool {
-		return entities[i] < entities[j]
-	})
-
-	return entities
-}
-
-// GetEntitiesWithComponent returns all entities that have a specific component sorted by ID
-func (w *World) GetEntitiesWithComponent(componentType string) []EntityID {
-	w.mu.RLock()
-	defer w.mu.RUnlock()
-
-	entities := make([]EntityID, 0)
-	for id, comps := range w.components {
-		if _, ok := comps[componentType]; ok {
-			entities = append(entities, id)
-		}
-	}
-
-	// Sort entities by ID to maintain stable order
-	sort.Slice(entities, func(i, j int) bool {
-		return entities[i] < entities[j]
-	})
-
-	return entities
-}
-
-// GetEntitiesWithComponents returns all entities that have all specified components sorted by ID
-func (w *World) GetEntitiesWithComponents(componentTypes ...string) []EntityID {
-	w.mu.RLock()
-	defer w.mu.RUnlock()
-
-	entities := make([]EntityID, 0)
-	for id, comps := range w.components {
-		hasAll := true
-		for _, ct := range componentTypes {
-			if _, ok := comps[ct]; !ok {
-				hasAll = false
-				break
-			}
-		}
-		if hasAll {
-			entities = append(entities, id)
-		}
-	}
-
-	// Sort entities by ID to maintain stable order
-	sort.Slice(entities, func(i, j int) bool {
-		return entities[i] < entities[j]
-	})
-
-	return entities
+func (w *World) DestroyEntity(entity EntityID) {
+	w.world.Remove(entity.Entity())
 }
 
 // EntityExists checks if an entity exists
-func (w *World) EntityExists(id EntityID) bool {
-	w.mu.RLock()
-	defer w.mu.RUnlock()
+func (w *World) EntityExists(entity EntityID) bool {
+	return entity.Valid()
+}
 
-	return w.entities[id]
+// GetEntitiesWithComponent returns all entities that have a specific component
+// This method is deprecated, kept for compatibility - use direct queries instead
+func (w *World) GetEntitiesWithComponent(componentType interface{}) []EntityID {
+	// This method is not used in the current implementation
+	// Direct queries should be used instead
+	return []EntityID{}
+}
+
+// GetEntitiesWithComponents returns all entities that have all specified components
+// This method is deprecated, kept for compatibility - use direct queries instead
+func (w *World) GetEntitiesWithComponents(componentTypes ...interface{}) []EntityID {
+	// This method is not used in the current implementation
+	// Direct queries should be used instead
+	return []EntityID{}
+}
+
+// GetAllEntities returns all entity IDs
+func (w *World) GetAllEntities() []EntityID {
+	entities := []EntityID{}
+	// Query for entities with Name component (all entities should have one)
+	q := query.NewQuery(filter.Contains(NameComponent))
+	q.Each(w.world, func(entry *donburi.Entry) {
+		entities = append(entities, entry)
+	})
+	return entities
 }
