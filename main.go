@@ -6,6 +6,7 @@ import (
 
 	"github.com/TheLazyLemur/SpaceImpact/pkg/assets"
 	"github.com/TheLazyLemur/SpaceImpact/pkg/ecs"
+	"github.com/TheLazyLemur/SpaceImpact/pkg/editor"
 	"github.com/TheLazyLemur/SpaceImpact/pkg/renderer"
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
@@ -34,14 +35,9 @@ func runEditor() {
 	rl.SetTargetFPS(60)
 	defer rl.CloseWindow()
 
-	// Camera setup
-	camera := rl.NewCamera3D(
-		rl.NewVector3(10, 10, 10), // position
-		rl.NewVector3(0, 0, 0),    // target
-		rl.NewVector3(0, 1, 0),    // up
-		45.0,                      // fovy
-		rl.CameraPerspective,      // projection
-	)
+	// Create viewport (full window for now)
+	viewport := editor.NewViewport(0, 0, float32(screenWidth), float32(screenHeight))
+	defer viewport.Cleanup()
 
 	// Create asset manager and load default assets
 	assetMgr := assets.NewAssetManager()
@@ -61,13 +57,18 @@ func runEditor() {
 
 	// Main loop
 	for !rl.WindowShouldClose() {
+		dt := rl.GetFrameTime()
+
+		// Update editor camera
+		viewport.Camera.Update(dt)
+
 		// Update systems
 		transformSystem.Update(scene)
 
-		// Draw
-		rl.BeginDrawing()
-		rl.ClearBackground(rl.NewColor(40, 42, 54, 255)) // Dracula background
+		// === RENDER TO VIEWPORT TEXTURE ===
+		viewport.Begin()
 
+		camera := viewport.Camera.GetRaylibCamera()
 		rl.BeginMode3D(camera)
 
 		// Draw grid
@@ -78,11 +79,20 @@ func runEditor() {
 
 		rl.EndMode3D()
 
-		// Draw UI
-		rl.DrawText("EDITOR MODE - Phase 2 Complete", 10, 10, 20, rl.NewColor(80, 250, 123, 255))
+		viewport.End()
+
+		// === RENDER TO SCREEN ===
+		rl.BeginDrawing()
+		rl.ClearBackground(rl.Black)
+
+		// Draw viewport texture to screen
+		viewport.Draw()
+
+		// Draw UI overlay
+		rl.DrawText("EDITOR MODE - Phase 3 Complete", 10, 10, 20, rl.NewColor(80, 250, 123, 255))
 		rl.DrawText(fmt.Sprintf("FPS: %d", rl.GetFPS()), 10, 40, 20, rl.RayWhite)
 		rl.DrawText(fmt.Sprintf("Entities: %d", len(scene.GetAllEntities())), 10, 70, 20, rl.RayWhite)
-		rl.DrawText("Mouse right + drag to orbit camera", 10, 100, 20, rl.LightGray)
+		rl.DrawText("WASD+QE: Move camera | Right Mouse: Look | Shift: Speed boost", 10, 100, 20, rl.LightGray)
 		rl.DrawText("Press ESC to exit", 10, 130, 20, rl.LightGray)
 
 		rl.EndDrawing()
