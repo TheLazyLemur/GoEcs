@@ -174,36 +174,39 @@ func abs32(a float32) float32 {
 
 // GetMouseRay generates a ray from the camera through the mouse position
 func GetMouseRay(mousePos rl.Vector2, camera rl.Camera3D, viewport rl.Rectangle) Ray {
-	// Normalize mouse coordinates to [-1, 1] range
-	x := (2.0*mousePos.X)/viewport.Width - 1.0
-	y := 1.0 - (2.0*mousePos.Y)/viewport.Height
-
-	// Get camera matrices
-	view := rl.GetCameraMatrix(camera)
-	projection := rl.GetCameraMatrix2D(rl.Camera2D{
-		Offset: rl.NewVector2(0, 0),
-		Target: rl.NewVector2(0, 0),
-		Rotation: 0,
-		Zoom: 1,
-	}) // Placeholder - we'll manually create projection
-
-	// Create proper projection matrix
+	// Calculate matrices
 	aspect := viewport.Width / viewport.Height
-	projection = createPerspectiveProjection(camera.Fovy, aspect, 0.01, 1000.0)
 
-	// Calculate inverse matrices
-	viewProjection := rl.MatrixMultiply(view, projection)
-	invViewProjection := rl.MatrixInvert(viewProjection)
+	// Create view matrix (camera transform)
+	viewMatrix := rl.GetCameraMatrix(camera)
 
-	// Near and far points in NDC
-	nearPoint := rl.NewVector3(x, y, -1.0)
-	farPoint := rl.NewVector3(x, y, 1.0)
+	// Create projection matrix
+	fovRad := camera.Fovy * rl.Deg2rad
+	top := 0.01 * float32(gomath.Tan(float64(fovRad/2.0)))
+	right := top * aspect
+
+	projMatrix := rl.MatrixFrustum(-right, right, -top, top, 0.01, 1000.0)
+
+	// Combine and invert
+	viewProj := rl.MatrixMultiply(viewMatrix, projMatrix)
+	invViewProj := rl.MatrixInvert(viewProj)
+
+	// Convert mouse position to normalized device coordinates [-1, 1]
+	ndcX := (2.0 * mousePos.X / viewport.Width) - 1.0
+	ndcY := 1.0 - (2.0 * mousePos.Y / viewport.Height)
+
+	// Create near and far points
+	near := rl.NewVector3(ndcX, ndcY, 0.0)  // Near plane in NDC
+	far := rl.NewVector3(ndcX, ndcY, 1.0)   // Far plane in NDC
 
 	// Transform to world space
-	nearWorld := rl.Vector3Transform(nearPoint, invViewProjection)
-	farWorld := rl.Vector3Transform(farPoint, invViewProjection)
+	nearWorld := rl.Vector3Transform(near, invViewProj)
+	farWorld := rl.Vector3Transform(far, invViewProj)
 
-	// Calculate ray direction
+	// Perspective divide (if needed)
+	// For perspective projection, we need to divide by W component
+
+	// Calculate direction
 	direction := rl.Vector3Subtract(farWorld, nearWorld)
 	direction = rl.Vector3Normalize(direction)
 
@@ -211,14 +214,4 @@ func GetMouseRay(mousePos rl.Vector2, camera rl.Camera3D, viewport rl.Rectangle)
 		Origin:    camera.Position,
 		Direction: direction,
 	}
-}
-
-// createPerspectiveProjection creates a perspective projection matrix
-func createPerspectiveProjection(fovy, aspect, near, far float32) rl.Matrix {
-	top := near * float32(gomath.Tan(float64(fovy*rl.Deg2rad/2.0)))
-	bottom := -top
-	right := top * aspect
-	left := -right
-
-	return rl.MatrixFrustum(left, right, bottom, top, near, far)
 }

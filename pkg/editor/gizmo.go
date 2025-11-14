@@ -199,7 +199,7 @@ func (g *Gizmo) updateTranslation(
 	viewport *Viewport,
 ) {
 	// Simple translation based on screen-space mouse movement
-	sensitivity := float32(0.01)
+	sensitivity := float32(0.05) // Increased sensitivity
 	offset := rl.Vector3Zero()
 
 	switch g.ActiveAxis {
@@ -208,7 +208,7 @@ func (g *Gizmo) updateTranslation(
 	case GizmoAxisY:
 		offset.Y = -mouseDelta.Y * sensitivity // Invert Y for intuitive up/down
 	case GizmoAxisZ:
-		offset.Z = mouseDelta.Y * sensitivity
+		offset.Z = -mouseDelta.Y * sensitivity // Negative for intuitive forward/back
 	}
 
 	// Apply offset to entity

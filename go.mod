@@ -1,6 +1,6 @@
 module github.com/TheLazyLemur/SpaceImpact
 
-go 1.25.1
+go 1.24
 
 require github.com/gen2brain/raylib-go/raylib v0.55.1
 

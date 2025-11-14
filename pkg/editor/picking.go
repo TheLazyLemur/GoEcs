@@ -70,11 +70,14 @@ func PickEntityInViewport(
 
 		// Test ray intersection
 		hit, distance := pkgmath.RayIntersectsBoundingBox(ray, worldBounds)
-		if hit && distance < closestHit.Distance {
-			closestHit = PickResult{
-				Hit:      true,
-				EntityID: entityID,
-				Distance: distance,
+		if hit {
+			// Only update if this is closer AND distance is positive (in front of camera)
+			if distance > 0 && distance < closestHit.Distance {
+				closestHit = PickResult{
+					Hit:      true,
+					EntityID: entityID,
+					Distance: distance,
+				}
 			}
 		}
 	}
