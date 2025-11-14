@@ -35,16 +35,36 @@ func runEditor() {
 	rl.SetTargetFPS(60)
 	defer rl.CloseWindow()
 
-	// Create viewport (full window for now)
-	viewport := editor.NewViewport(0, 0, float32(screenWidth), float32(screenHeight))
-	defer viewport.Cleanup()
-
 	// Create asset manager and load default assets
 	assetMgr := assets.NewAssetManager()
 	assetMgr.CreateDefaultAssets()
 
 	// Create scene
 	scene := ecs.NewScene("TestScene")
+
+	// Create editor state
+	editorState := editor.NewEditorState(scene)
+
+	// Create UI panels
+	hierarchyPanel := editor.NewHierarchyPanel(0, 0, editorState.HierarchyWidth, float32(screenHeight))
+	inspectorPanel := editor.NewInspectorPanel(
+		float32(screenWidth)-editorState.InspectorWidth,
+		0,
+		editorState.InspectorWidth,
+		float32(screenHeight),
+	)
+
+	// Create viewport (center area between panels)
+	viewportX := editorState.HierarchyWidth
+	viewportY := float32(0)
+	viewportWidth := float32(screenWidth) - editorState.HierarchyWidth - editorState.InspectorWidth
+	viewportHeight := float32(screenHeight)
+
+	viewport := editor.NewViewport(viewportX, viewportY, viewportWidth, viewportHeight)
+	defer viewport.Cleanup()
+
+	// Add viewport to state
+	editorState.Viewports = append(editorState.Viewports, viewport)
 
 	// Create systems
 	transformSystem := ecs.NewTransformSystem()
@@ -59,8 +79,21 @@ func runEditor() {
 	for !rl.WindowShouldClose() {
 		dt := rl.GetFrameTime()
 
-		// Update editor camera
-		viewport.Camera.Update(dt)
+		// Handle mode switching
+		if rl.IsKeyPressed(rl.KeyF5) {
+			if editorState.Mode == editor.ModeEdit {
+				editorState.SetMode(editor.ModePlay)
+				fmt.Println("Entering PLAY mode")
+			} else {
+				editorState.SetMode(editor.ModeEdit)
+				fmt.Println("Entering EDIT mode")
+			}
+		}
+
+		// Update editor camera (only in edit mode)
+		if editorState.Mode == editor.ModeEdit {
+			viewport.Camera.Update(dt)
+		}
 
 		// Update systems
 		transformSystem.Update(scene)
@@ -83,17 +116,31 @@ func runEditor() {
 
 		// === RENDER TO SCREEN ===
 		rl.BeginDrawing()
-		rl.ClearBackground(rl.Black)
+		rl.ClearBackground(rl.NewColor(30, 30, 30, 255))
 
 		// Draw viewport texture to screen
 		viewport.Draw()
 
-		// Draw UI overlay
-		rl.DrawText("EDITOR MODE - Phase 3 Complete", 10, 10, 20, rl.NewColor(80, 250, 123, 255))
-		rl.DrawText(fmt.Sprintf("FPS: %d", rl.GetFPS()), 10, 40, 20, rl.RayWhite)
-		rl.DrawText(fmt.Sprintf("Entities: %d", len(scene.GetAllEntities())), 10, 70, 20, rl.RayWhite)
-		rl.DrawText("WASD+QE: Move camera | Right Mouse: Look | Shift: Speed boost", 10, 100, 20, rl.LightGray)
-		rl.DrawText("Press ESC to exit", 10, 130, 20, rl.LightGray)
+		// Draw UI panels
+		hierarchyPanel.Draw(editorState)
+		inspectorPanel.Draw(editorState)
+
+		// Draw top bar with mode indicator
+		modeColor := rl.NewColor(80, 250, 123, 255)
+		if editorState.Mode == editor.ModePlay {
+			modeColor = rl.NewColor(255, 184, 108, 255)
+		}
+		rl.DrawText(
+			fmt.Sprintf("Mode: %s | FPS: %d | Entities: %d",
+				editorState.Mode.String(),
+				rl.GetFPS(),
+				len(scene.GetAllEntities()),
+			),
+			10, 10, 16, modeColor,
+		)
+
+		// Draw help text
+		rl.DrawText("F5: Toggle Play/Edit | ESC: Exit", 10, int32(screenHeight)-25, 14, rl.LightGray)
 
 		rl.EndDrawing()
 	}
