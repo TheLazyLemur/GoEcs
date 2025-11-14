@@ -70,6 +70,9 @@ func runEditor() {
 	transformSystem := ecs.NewTransformSystem()
 	renderSystem := renderer.NewRenderSystem(assetMgr, transformSystem)
 
+	// Create gizmo
+	gizmo := editor.NewGizmo()
+
 	// Create some test entities
 	createTestEntities(scene)
 
@@ -90,8 +93,13 @@ func runEditor() {
 			}
 		}
 
-		// Handle viewport picking (only in edit mode)
+		// Update gizmo (only in edit mode)
 		if editorState.Mode == editor.ModeEdit {
+			gizmo.Update(viewport, editorState, transformSystem)
+		}
+
+		// Handle viewport picking (only in edit mode and not dragging gizmo)
+		if editorState.Mode == editor.ModeEdit && !gizmo.IsDragging {
 			// Check for left mouse click in viewport
 			if rl.IsMouseButtonPressed(rl.MouseLeftButton) {
 				mousePos := rl.GetMousePosition()
@@ -144,6 +152,15 @@ func runEditor() {
 		// Draw selection highlights
 		drawSelectionHighlights(editorState, transformSystem)
 
+		// Draw gizmo for selected entity (only in edit mode)
+		if editorState.Mode == editor.ModeEdit && editorState.HasSelection() {
+			entityID := editorState.GetFirstSelected()
+			transform, ok := editorState.Scene.GetTransform(entityID)
+			if ok {
+				gizmo.DrawTranslationGizmo(transform.Position, viewport.Camera)
+			}
+		}
+
 		rl.EndMode3D()
 
 		viewport.End()
@@ -174,7 +191,7 @@ func runEditor() {
 		)
 
 		// Draw help text
-		rl.DrawText("F5: Toggle Play/Edit | ESC: Exit", 10, int32(screenHeight)-25, 14, rl.LightGray)
+		rl.DrawText("Click to select | Drag gizmo arrows to move | F5: Play/Edit | ESC: Exit", 10, int32(screenHeight)-25, 14, rl.LightGray)
 
 		rl.EndDrawing()
 	}
