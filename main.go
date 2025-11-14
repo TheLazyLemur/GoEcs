@@ -90,6 +90,37 @@ func runEditor() {
 			}
 		}
 
+		// Handle viewport picking (only in edit mode)
+		if editorState.Mode == editor.ModeEdit {
+			// Check for left mouse click in viewport
+			if rl.IsMouseButtonPressed(rl.MouseLeftButton) {
+				mousePos := rl.GetMousePosition()
+
+				// Make sure click is in viewport (not on panels)
+				if viewport.IsMouseOver() {
+					// Perform picking
+					pickResult := editor.PickEntityInViewport(viewport, mousePos, scene, transformSystem)
+
+					if pickResult.Hit {
+						// Handle multi-select with Ctrl
+						if rl.IsKeyDown(rl.KeyLeftControl) || rl.IsKeyDown(rl.KeyRightControl) {
+							editorState.AddToSelection(pickResult.EntityID)
+						} else {
+							editorState.SelectEntity(pickResult.EntityID)
+						}
+
+						name, _ := scene.GetName(pickResult.EntityID)
+						fmt.Printf("Selected: %s (ID: %d, Distance: %.2f)\n", name, pickResult.EntityID, pickResult.Distance)
+					} else {
+						// Clicked in viewport but hit nothing - clear selection
+						if !rl.IsKeyDown(rl.KeyLeftControl) && !rl.IsKeyDown(rl.KeyRightControl) {
+							editorState.ClearSelection()
+						}
+					}
+				}
+			}
+		}
+
 		// Update editor camera (only in edit mode)
 		if editorState.Mode == editor.ModeEdit {
 			viewport.Camera.Update(dt)
@@ -109,6 +140,9 @@ func runEditor() {
 
 		// Render all entities
 		renderSystem.Render(scene)
+
+		// Draw selection highlights
+		drawSelectionHighlights(editorState, transformSystem)
 
 		rl.EndMode3D()
 
@@ -172,6 +206,52 @@ func createTestEntities(scene *ecs.Scene) {
 	scene.AddTransform(floor)
 	scene.AddRenderMesh(floor, "plane", "default")
 	scene.SetTransform(floor, rl.NewVector3(0, -1, 0), rl.NewVector3(1, 1, 1), identityQuat)
+}
+
+func drawSelectionHighlights(editorState *editor.EditorState, transformSystem *ecs.TransformSystem) {
+	if !editorState.HasSelection() {
+		return
+	}
+
+	// Draw wireframe highlights for selected entities
+	for _, entityID := range editorState.Selected {
+		transform, ok := editorState.Scene.GetTransform(entityID)
+		if !ok {
+			continue
+		}
+
+		// Get render mesh to determine shape
+		renderMesh, ok := editorState.Scene.GetRenderMesh(entityID)
+		if !ok {
+			continue
+		}
+
+		// Draw highlight based on mesh type
+		highlightColor := rl.NewColor(255, 184, 108, 255) // Orange highlight
+
+		switch renderMesh.MeshID {
+		case "cube":
+			// Draw wireframe cube at entity position with scale
+			size := rl.NewVector3(2.0, 2.0, 2.0)
+			size.X *= transform.Scale.X
+			size.Y *= transform.Scale.Y
+			size.Z *= transform.Scale.Z
+			rl.DrawCubeWiresV(transform.Position, size, highlightColor)
+
+		case "sphere":
+			// Draw wireframe sphere
+			radius := transform.Scale.X
+			rl.DrawSphereWires(transform.Position, radius, 16, 16, highlightColor)
+
+		case "plane":
+			// Draw wireframe for plane (as a thin box)
+			size := rl.NewVector3(10, 0.1, 10)
+			size.X *= transform.Scale.X
+			size.Y *= transform.Scale.Y
+			size.Z *= transform.Scale.Z
+			rl.DrawCubeWiresV(transform.Position, size, highlightColor)
+		}
+	}
 }
 
 func runGame() {
