@@ -1,6 +1,7 @@
 package ecs
 
 import (
+	"sort"
 	"sync"
 )
 
@@ -94,7 +95,7 @@ func (w *World) HasComponent(id EntityID, componentType string) bool {
 	return false
 }
 
-// GetAllEntities returns all entity IDs
+// GetAllEntities returns all entity IDs sorted by ID
 func (w *World) GetAllEntities() []EntityID {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
@@ -103,10 +104,16 @@ func (w *World) GetAllEntities() []EntityID {
 	for id := range w.entities {
 		entities = append(entities, id)
 	}
+
+	// Sort entities by ID to maintain stable order
+	sort.Slice(entities, func(i, j int) bool {
+		return entities[i] < entities[j]
+	})
+
 	return entities
 }
 
-// GetEntitiesWithComponent returns all entities that have a specific component
+// GetEntitiesWithComponent returns all entities that have a specific component sorted by ID
 func (w *World) GetEntitiesWithComponent(componentType string) []EntityID {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
@@ -117,10 +124,16 @@ func (w *World) GetEntitiesWithComponent(componentType string) []EntityID {
 			entities = append(entities, id)
 		}
 	}
+
+	// Sort entities by ID to maintain stable order
+	sort.Slice(entities, func(i, j int) bool {
+		return entities[i] < entities[j]
+	})
+
 	return entities
 }
 
-// GetEntitiesWithComponents returns all entities that have all specified components
+// GetEntitiesWithComponents returns all entities that have all specified components sorted by ID
 func (w *World) GetEntitiesWithComponents(componentTypes ...string) []EntityID {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
@@ -138,6 +151,12 @@ func (w *World) GetEntitiesWithComponents(componentTypes ...string) []EntityID {
 			entities = append(entities, id)
 		}
 	}
+
+	// Sort entities by ID to maintain stable order
+	sort.Slice(entities, func(i, j int) bool {
+		return entities[i] < entities[j]
+	})
+
 	return entities
 }
 
